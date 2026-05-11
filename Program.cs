@@ -24,6 +24,8 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 
 builder.Services.AddControllersWithViews();
 
+
+builder.Services.AddRazorPages();
 var app = builder.Build();
 
 
