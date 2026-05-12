@@ -1,0 +1,390 @@
+﻿@model IEnumerable<E_commerce_Website__Skincare_.Models.Testimonial>
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Testimonials & Reviews";
+    ViewData["ActivePage"] = "Testimonials";
+    var reviews = ViewBag.Reviews as IEnumerable<E_commerce_Website__Skincare_.Models.Review>;
+}
+
+<!-- Tabs -->
+<div class="flex gap-2 mb-8 border-b border-outline-variant">
+    <button onclick="switchTab('testimonials')" id="tab-testimonials"
+            class="px-6 py-3 text-sm font-semibold border-b-2 border-primary text-primary transition-colors">
+        Testimonials
+        <span class="ml-2 px-2 py-0.5 rounded-full text-xs" style="background:#f2ede8;">@Model.Count()</span>
+    </button>
+    <button onclick="switchTab('reviews')" id="tab-reviews"
+            class="px-6 py-3 text-sm font-semibold border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors">
+        Product Reviews
+        <span class="ml-2 px-2 py-0.5 rounded-full text-xs" style="background:#f2ede8;">@(reviews?.Count() ?? 0)</span>
+    </button>
+</div>
+
+<!-- ===================== -->
+<!-- TESTIMONIALS TAB      -->
+<!-- ===================== -->
+<div id="panel-testimonials">
+
+    <!-- Stats -->
+    <div class="grid grid-cols-3 gap-6 mb-8">
+        <div class="bg-surface-container-low p-6 rounded-xl border border-white/40"
+             style="box-shadow:0 10px 30px -5px rgba(80,64,48,0.06);">
+            <p class="text-xs font-semibold tracking-widest text-on-surface-variant uppercase mb-1">Total</p>
+            <h3 class="text-3xl font-medium" style="font-family:'Playfair Display',serif;">@Model.Count()</h3>
+        </div>
+        <div class="bg-surface-container-low p-6 rounded-xl border border-white/40"
+             style="box-shadow:0 10px 30px -5px rgba(80,64,48,0.06);">
+            <p class="text-xs font-semibold tracking-widest text-on-surface-variant uppercase mb-1">Approved</p>
+            <h3 class="text-3xl font-medium text-primary" style="font-family:'Playfair Display',serif;">@Model.Count(t => t.IsApproved)</h3>
+        </div>
+        <div class="bg-surface-container-low p-6 rounded-xl border border-white/40"
+             style="box-shadow:0 10px 30px -5px rgba(80,64,48,0.06);">
+            <p class="text-xs font-semibold tracking-widest text-on-surface-variant uppercase mb-1">Pending</p>
+            <h3 class="text-3xl font-medium" style="font-family:'Playfair Display',serif; color:#92400e;">@Model.Count(t => !t.IsApproved)</h3>
+        </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="bg-surface-container-low rounded-xl px-6 py-4 mb-6 flex items-center gap-4"
+         style="box-shadow:0 10px 30px -5px rgba(80,64,48,0.06);">
+        <div class="relative flex-1 max-w-xs">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant opacity-60" style="font-size:18px;">search</span>
+            <input id="testSearch" type="text" placeholder="Search by name..."
+                   class="w-full bg-surface border border-outline-variant rounded-full py-2 pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all" />
+        </div>
+        <select id="testFilter"
+                class="bg-surface border border-outline-variant rounded-full py-2 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+            <option value="">All</option>
+            <option value="approved">Approved</option>
+            <option value="pending">Pending</option>
+        </select>
+    </div>
+
+    <!-- Cards -->
+    <div id="testimonialsList" class="space-y-4">
+        @if (!Model.Any())
+        {
+            <div class="text-center py-16 text-on-surface-variant opacity-60">
+                <span class="material-symbols-outlined" style="font-size:48px;">chat_bubble</span>
+                <p class="mt-2">No testimonials yet</p>
+            </div>
+        }
+        @foreach (var t in Model)
+        {
+            <div class="bg-surface-container-low rounded-xl p-6 border border-white/40 transition-all"
+                 style="box-shadow:0 10px 30px -5px rgba(80,64,48,0.06);"
+                 id="test-@t.Id"
+                 data-approved="@(t.IsApproved ? "approved" : "pending")"
+                 data-name="@(t.User?.FullName?.ToLower() ?? "")">
+                <div class="flex items-start gap-4">
+                    <!-- Avatar -->
+                    <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold flex-shrink-0">
+                        @((t.User?.FullName ?? "U").Substring(0, 1).ToUpper())
+                    </div>
+                    <!-- Content -->
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between mb-2">
+                            <div>
+                                <p class="font-semibold text-on-surface">@(t.User?.FullName ?? "Deleted User")</p>
+                                <p class="text-xs text-on-surface-variant opacity-70">@(t.User?.Email ?? "")</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                @if (t.IsApproved)
+                                {
+                                    <span class="px-3 py-1 rounded-full text-xs font-semibold" style="background:#d1fae5; color:#065f46;">Approved</span>
+                                }
+                                else
+                                {
+                                    <span class="px-3 py-1 rounded-full text-xs font-semibold" style="background:#fef3c7; color:#92400e;">Pending</span>
+                                }
+                                <button onclick="toggleTestimonial(@t.Id, this)"
+                                        class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-surface-container hover:bg-surface-variant transition-colors text-on-surface-variant">
+                                    <span class="material-symbols-outlined" style="font-size:14px;">@(t.IsApproved ? "cancel" : "check_circle")</span>
+                                    @(t.IsApproved ? "Reject" : "Approve")
+                                </button>
+                                <button onclick="deleteTestimonial(@t.Id)"
+                                        class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-surface-container transition-colors text-on-surface-variant">
+                                    <span class="material-symbols-outlined" style="font-size:14px;">delete</span>
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-sm text-on-surface-variant leading-relaxed">"@t.Content"</p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- ===================== -->
+<!-- REVIEWS TAB           -->
+<!-- ===================== -->
+<div id="panel-reviews" class="hidden">
+
+    <!-- Stats -->
+    <div class="grid grid-cols-3 gap-6 mb-8">
+        <div class="bg-surface-container-low p-6 rounded-xl border border-white/40"
+             style="box-shadow:0 10px 30px -5px rgba(80,64,48,0.06);">
+            <p class="text-xs font-semibold tracking-widest text-on-surface-variant uppercase mb-1">Total</p>
+            <h3 class="text-3xl font-medium" style="font-family:'Playfair Display',serif;">@(reviews?.Count() ?? 0)</h3>
+        </div>
+        <div class="bg-surface-container-low p-6 rounded-xl border border-white/40"
+             style="box-shadow:0 10px 30px -5px rgba(80,64,48,0.06);">
+            <p class="text-xs font-semibold tracking-widest text-on-surface-variant uppercase mb-1">Approved</p>
+            <h3 class="text-3xl font-medium text-primary" style="font-family:'Playfair Display',serif;">@(reviews?.Count(r => r.IsApproved) ?? 0)</h3>
+        </div>
+        <div class="bg-surface-container-low p-6 rounded-xl border border-white/40"
+             style="box-shadow:0 10px 30px -5px rgba(80,64,48,0.06);">
+            <p class="text-xs font-semibold tracking-widest text-on-surface-variant uppercase mb-1">Pending</p>
+            <h3 class="text-3xl font-medium" style="font-family:'Playfair Display',serif; color:#92400e;">@(reviews?.Count(r => !r.IsApproved) ?? 0)</h3>
+        </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="bg-surface-container-low rounded-xl px-6 py-4 mb-6 flex items-center gap-4"
+         style="box-shadow:0 10px 30px -5px rgba(80,64,48,0.06);">
+        <div class="relative flex-1 max-w-xs">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant opacity-60" style="font-size:18px;">search</span>
+            <input id="revSearch" type="text" placeholder="Search by product or name..."
+                   class="w-full bg-surface border border-outline-variant rounded-full py-2 pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all" />
+        </div>
+        <select id="revFilter"
+                class="bg-surface border border-outline-variant rounded-full py-2 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+            <option value="">All</option>
+            <option value="approved">Approved</option>
+            <option value="pending">Pending</option>
+        </select>
+        <select id="ratingFilter"
+                class="bg-surface border border-outline-variant rounded-full py-2 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+            <option value="">All Ratings</option>
+            <option value="5">★★★★★ 5</option>
+            <option value="4">★★★★ 4</option>
+            <option value="3">★★★ 3</option>
+            <option value="2">★★ 2</option>
+            <option value="1">★ 1</option>
+        </select>
+    </div>
+
+    <!-- Cards -->
+    <div id="reviewsList" class="space-y-4">
+        @if (reviews == null || !reviews.Any())
+        {
+            <div class="text-center py-16 text-on-surface-variant opacity-60">
+                <span class="material-symbols-outlined" style="font-size:48px;">star</span>
+                <p class="mt-2">No reviews yet</p>
+            </div>
+        }
+        @if (reviews != null)
+        {
+            @foreach (var r in reviews)
+            {
+                <div class="bg-surface-container-low rounded-xl p-6 border border-white/40"
+                     style="box-shadow:0 10px 30px -5px rgba(80,64,48,0.06);"
+                     id="rev-@r.Id"
+                     data-approved="@(r.IsApproved ? "approved" : "pending")"
+                     data-name="@(r.User?.FullName?.ToLower() ?? "")"
+                     data-product="@(r.Product?.Name?.ToLower() ?? "")"
+                     data-rating="@r.Rating">
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center font-bold flex-shrink-0" style="color:#70585b;">
+                            @((r.User?.FullName ?? "U").Substring(0, 1).ToUpper())
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-2">
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <p class="font-semibold text-on-surface">@(r.User?.FullName ?? "Deleted User")</p>
+                                        <span class="px-2 py-0.5 rounded-full text-xs bg-surface-container text-on-surface-variant">@(r.Product?.Name ?? "Deleted Product")</span>
+                                    </div>
+                                    <!-- Stars -->
+                                    <div class="flex items-center gap-1 mt-1">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            <span style="color: @(i <= r.Rating ? "#f5c518" : "#cbc6b9"); font-size:14px;">★</span>
+                                        }
+                                        <span class="text-xs text-on-surface-variant ml-1">(@r.Rating/5)</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    @if (r.IsApproved)
+                                    {
+                                        <span class="px-3 py-1 rounded-full text-xs font-semibold" style="background:#d1fae5; color:#065f46;">Approved</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="px-3 py-1 rounded-full text-xs font-semibold" style="background:#fef3c7; color:#92400e;">Pending</span>
+                                    }
+                                    <button onclick="toggleReview(@r.Id, this)"
+                                            class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-surface-container hover:bg-surface-variant transition-colors text-on-surface-variant">
+                                        <span class="material-symbols-outlined" style="font-size:14px;">@(r.IsApproved ? "cancel" : "check_circle")</span>
+                                        @(r.IsApproved ? "Reject" : "Approve")
+                                    </button>
+                                    <button onclick="deleteReview(@r.Id)"
+                                            class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-surface-container transition-colors text-on-surface-variant">
+                                        <span class="material-symbols-outlined" style="font-size:14px;">delete</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <p class="text-sm text-on-surface-variant leading-relaxed">"@r.Comment"</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="fixed bottom-6 right-6 z-50 hidden">
+    <div class="bg-on-surface text-surface px-5 py-3 rounded-xl text-sm font-semibold shadow-xl">
+        <span id="toastMsg"></span>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // ── Tabs ──
+        function switchTab(tab) {
+            ['testimonials', 'reviews'].forEach(t => {
+                document.getElementById(`panel-${t}`).classList.toggle('hidden', t !== tab);
+                const btn = document.getElementById(`tab-${t}`);
+                btn.classList.toggle('border-primary', t === tab);
+                btn.classList.toggle('text-primary', t === tab);
+                btn.classList.toggle('border-transparent', t !== tab);
+                btn.classList.toggle('text-on-surface-variant', t !== tab);
+            });
+        }
+
+        // ── Toggle Testimonial ──
+        function toggleTestimonial(id, btn) {
+            fetch('/Admin/ApproveTestimonial', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `id=${id}`
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) return;
+                const card  = document.getElementById(`test-${id}`);
+                const badge = card.querySelector('[class*="rounded-full"]');
+                const icon  = btn.querySelector('.material-symbols-outlined');
+                if (data.approved) {
+                    badge.style.cssText = 'background:#d1fae5; color:#065f46;';
+                    badge.textContent   = 'Approved';
+                    icon.textContent    = 'cancel';
+                    btn.childNodes[1].textContent = ' Reject';
+                    card.dataset.approved = 'approved';
+                } else {
+                    badge.style.cssText = 'background:#fef3c7; color:#92400e;';
+                    badge.textContent   = 'Pending';
+                    icon.textContent    = 'check_circle';
+                    btn.childNodes[1].textContent = ' Approve';
+                    card.dataset.approved = 'pending';
+                }
+                showToast('Status updated');
+            });
+        }
+
+        // ── Delete Testimonial ──
+        function deleteTestimonial(id) {
+            if (!confirm('Delete this testimonial?')) return;
+            fetch('/Admin/DeleteTestimonial', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `id=${id}`
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById(`test-${id}`).remove();
+                    showToast('Deleted successfully');
+                }
+            });
+        }
+
+        // ── Toggle Review ──
+        function toggleReview(id, btn) {
+            fetch('/Admin/ApproveReview', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `id=${id}`
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) return;
+                const card  = document.getElementById(`rev-${id}`);
+                const badge = card.querySelector('[class*="rounded-full"]');
+                const icon  = btn.querySelector('.material-symbols-outlined');
+                if (data.approved) {
+                    badge.style.cssText = 'background:#d1fae5; color:#065f46;';
+                    badge.textContent   = 'Approved';
+                    icon.textContent    = 'cancel';
+                    btn.childNodes[1].textContent = ' Reject';
+                    card.dataset.approved = 'approved';
+                } else {
+                    badge.style.cssText = 'background:#fef3c7; color:#92400e;';
+                    badge.textContent   = 'Pending';
+                    icon.textContent    = 'check_circle';
+                    btn.childNodes[1].textContent = ' Approve';
+                    card.dataset.approved = 'pending';
+                }
+                showToast('Status updated');
+            });
+        }
+
+        // ── Delete Review ──
+        function deleteReview(id) {
+            if (!confirm('Delete this review?')) return;
+            fetch('/Admin/DeleteReview', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `id=${id}`
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById(`rev-${id}`).remove();
+                    showToast('Deleted successfully');
+                }
+            });
+        }
+
+        // ── Filter Testimonials ──
+        function filterTestimonials() {
+            const search = document.getElementById('testSearch').value.toLowerCase();
+            const status = document.getElementById('testFilter').value;
+            document.querySelectorAll('#testimonialsList [id^="test-"]').forEach(card => {
+                const match = (!search || card.dataset.name.includes(search)) &&
+                              (!status || card.dataset.approved === status);
+                card.style.display = match ? '' : 'none';
+            });
+        }
+        document.getElementById('testSearch').addEventListener('input', filterTestimonials);
+        document.getElementById('testFilter').addEventListener('change', filterTestimonials);
+
+        // ── Filter Reviews ──
+        function filterReviews() {
+            const search = document.getElementById('revSearch').value.toLowerCase();
+            const status = document.getElementById('revFilter').value;
+            const rating = document.getElementById('ratingFilter').value;
+            document.querySelectorAll('#reviewsList [id^="rev-"]').forEach(card => {
+                const match = (!search || card.dataset.name.includes(search) || card.dataset.product.includes(search)) &&
+                              (!status || card.dataset.approved === status) &&
+                              (!rating || card.dataset.rating === rating);
+                card.style.display = match ? '' : 'none';
+            });
+        }
+        document.getElementById('revSearch').addEventListener('input', filterReviews);
+        document.getElementById('revFilter').addEventListener('change', filterReviews);
+        document.getElementById('ratingFilter').addEventListener('change', filterReviews);
+
+        // ── Toast ──
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toastMsg').textContent = msg;
+            t.classList.remove('hidden');
+            setTimeout(() => t.classList.add('hidden'), 3000);
+        }
+    </script>
+}
